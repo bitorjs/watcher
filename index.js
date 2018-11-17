@@ -6,8 +6,6 @@ const fs = require('fs');
 const toString = Object.prototype.toString;
 
 class WatcherWebpackPlugin {
-
-
   constructor(options = {}) {
     this.options = options;
     this.root = options.root || process.cwd();

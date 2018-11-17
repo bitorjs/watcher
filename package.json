@@ -1,5 +1,5 @@
 {
-  "name": "watcher-webpack-plugin",
+  "name": "watcher-plugin",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitorjs/watcher-webpack-plugin.git"
+    "url": "git+https://github.com/bitorjs/watcher-plugin.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/bitorjs/watcher-webpack-plugin/issues"
+    "url": "https://github.com/bitorjs/watcher-plugin/issues"
   },
-  "homepage": "https://github.com/bitorjs/watcher-webpack-plugin#readme",
+  "homepage": "https://github.com/bitorjs/watcher-plugin#readme",
   "dependencies": {
     "chokidar": "^2.0.4"
   }
