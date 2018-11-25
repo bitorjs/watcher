@@ -1,6 +1,6 @@
 {
-  "name": "watcher-plugin",
-  "version": "1.0.0",
+  "name": "bitorjs-watcher",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitorjs/watcher-plugin.git"
+    "url": "git+https://github.com/bitorjs/watcher.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/bitorjs/watcher-plugin/issues"
+    "url": "https://github.com/bitorjs/watcher/issues"
   },
-  "homepage": "https://github.com/bitorjs/watcher-plugin#readme",
+  "homepage": "https://github.com/bitorjs/watcher#readme",
   "dependencies": {
     "chokidar": "^2.0.4"
   }

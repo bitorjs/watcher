@@ -112,7 +112,7 @@ class WatcherWebpackPlugin {
           options.onAddCallback(namespace, path);
           this.cacheFiles(namespace, path, 'add')
         } : (path) => {
-          return null;
+          this.cacheFiles(namespace, path, 'add')
         }
       )
       .on(
@@ -121,7 +121,7 @@ class WatcherWebpackPlugin {
           options.onChangeCallback(namespace, path);
           this.cacheFiles(namespace, path, 'change')
         } : (path) => {
-          console.log(`File ${path} has been changed`)
+          this.cacheFiles(namespace, path, 'change')
         }
       )
       .on(
@@ -130,7 +130,7 @@ class WatcherWebpackPlugin {
           options.onUnlinkCallback(namespace, path);
           this.cacheFiles(namespace, path, 'unlink')
         } : (path) => {
-          console.log(`File ${path} has been removed`);
+          this.cacheFiles(namespace, path, 'unlink')
         }
       );
 
@@ -141,7 +141,7 @@ class WatcherWebpackPlugin {
           options.onAddDirCallback(namespace, path);
           this.cacheFiles(namespace, path, 'addDir')
         } : (path) => {
-          console.log(`Directory ${path} has been added`);
+          this.cacheFiles(namespace, path, 'addDir')
         }
       )
       .on(
@@ -150,7 +150,7 @@ class WatcherWebpackPlugin {
           options.unlinkDirCallback(namespace, path);
           this.cacheFiles(namespace, path, 'unlinkDir')
         } : (path) => {
-          console.log(`Directory ${path} has been removed`);
+          this.cacheFiles(namespace, path, 'unlinkDir')
         }
       )
       .on(
@@ -166,7 +166,7 @@ class WatcherWebpackPlugin {
         'ready',
         options.onReadyCallback ? (path) => {
           options.onReadyCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'ready')
+          // this.cacheFiles(namespace, path, 'ready')
         } : () => {
           console.log('Initial scan complete. Ready for changes');
         }
