@@ -4,6 +4,7 @@ const fs = require('fs');
 
 
 const toString = Object.prototype.toString;
+const cwd = process.cwd();
 
 class WatcherWebpackPlugin {
   constructor(options = {}) {
@@ -23,6 +24,48 @@ class WatcherWebpackPlugin {
     if (toString.call(this.cachefile) !== '[object String]') {
       throw new TypeError('The option cacefile must be the String Type.')
     }
+
+    this.pluginConfig = pathUrl.join(cwd, 'config', 'plugin.js');
+    if (options.plugin === false) {
+      this.pluginConfig = null;
+    }
+    if (toString.call(options.plugin) === '[object String]') {
+      try {
+        require(options.plugin)
+        this.pluginConfig = options.plugin;
+      } catch (error) {
+        this.pluginConfig = null;
+      }
+    }
+
+    this.pluginWatchers = {};
+    if (this.pluginConfig !== null) {
+      var pcwatcher = chokidar.watch(this.pluginConfig);
+      this.pluginHandle(this.pluginConfig)
+      pcwatcher.on(
+        'change', () => {
+          this.pluginHandle(this.pluginConfig)
+        })
+    }
+  }
+
+  pluginHandle(pluginConfig) {
+    delete require.cache[pluginConfig]
+    const config = require(pluginConfig);
+    Object.keys(config).map((key) => {
+      if (pluginConfig[key] === undefined) {
+        if (config[key].path) {
+          Object.keys(this.rules).forEach(namespace => {
+            let rule = this.rules[namespace];
+            let pluginpath = pathUrl.join(config[key].path, 'app');
+            // console.log(key, config[key].path, pluginpath)
+            let watcher = this.createChokidar(rule, this.chokidarOption, pluginpath)
+            this.bindWatcher(watcher, namespace, pluginpath);
+          })
+        }
+        this.pluginWatchers[key] = true;
+      }
+    })
   }
 
   /**
@@ -30,13 +73,13 @@ class WatcherWebpackPlugin {
    * @param {*} files 'file, dir, glob, or array'
    * @param {*} options 
    */
-  createChokidar(files, options = {}) {
+  createChokidar(files, options = {}, fileroot) {
     var watcher = chokidar.watch(files, {
       persistent: options.persistance || true,
       ignored: options.ignored || false,
       ignoreInitial: options.ignoreInitial || false,
       followSymlinks: options.followSymlinks || true,
-      cwd: this.root || '.',
+      cwd: fileroot, //this.root || '.',
       disableGlobbing: options.disableGlobbing || false,
       usePolling: options.usePolling || true,
       interval: options.interval || 100,
@@ -70,8 +113,8 @@ class WatcherWebpackPlugin {
     }
   }
 
-  cacheFiles(namespace, path, action) {
-    path = pathUrl.join(this.root, path)
+  cacheFiles(namespace, path, action, fileroot) {
+    path = pathUrl.join(fileroot, path)
     switch (action) {
       case 'add':
         this.watcherFiles[namespace].push(path)
@@ -81,10 +124,6 @@ class WatcherWebpackPlugin {
           let ind = this.watcherFiles[namespace].indexOf(path)
           this.watcherFiles[namespace].splice(ind, 1)
         }
-        break;
-
-      case "init":
-        this.watcherFiles[namespace] = []
         break;
     }
 
@@ -97,40 +136,36 @@ class WatcherWebpackPlugin {
     }
   }
 
-  bindWatcher(watcher, compiler, namespace) {
+  bindWatcher(watcher, namespace, fileroot) {
 
-    this.cacheFiles(namespace, '', 'init');
-    let callbackContext = {
-      watcher,
-      compiler
-    }
+    // this.cacheFiles(namespace, '', 'init', fileroot);
     let options = this.options;
     watcher
       .on(
         'add',
         options.onAddCallback ? (path) => {
           options.onAddCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'add')
+          this.cacheFiles(namespace, path, 'add', fileroot)
         } : (path) => {
-          this.cacheFiles(namespace, path, 'add')
+          this.cacheFiles(namespace, path, 'add', fileroot)
         }
       )
       .on(
         'change',
         options.onChangeCallback ? (path) => {
           options.onChangeCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'change')
+          this.cacheFiles(namespace, path, 'change', fileroot)
         } : (path) => {
-          this.cacheFiles(namespace, path, 'change')
+          this.cacheFiles(namespace, path, 'change', fileroot)
         }
       )
       .on(
         'unlink',
         options.onUnlinkCallback ? (path) => {
           options.onUnlinkCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'unlink')
+          this.cacheFiles(namespace, path, 'unlink', fileroot)
         } : (path) => {
-          this.cacheFiles(namespace, path, 'unlink')
+          this.cacheFiles(namespace, path, 'unlink', fileroot)
         }
       );
 
@@ -139,25 +174,25 @@ class WatcherWebpackPlugin {
         'addDir',
         options.onAddDirCallback ? (path) => {
           options.onAddDirCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'addDir')
+          this.cacheFiles(namespace, path, 'addDir', fileroot)
         } : (path) => {
-          this.cacheFiles(namespace, path, 'addDir')
+          this.cacheFiles(namespace, path, 'addDir', fileroot)
         }
       )
       .on(
         'unlinkDir',
         options.unlinkDirCallback ? (path) => {
           options.unlinkDirCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'unlinkDir')
+          this.cacheFiles(namespace, path, 'unlinkDir', fileroot)
         } : (path) => {
-          this.cacheFiles(namespace, path, 'unlinkDir')
+          this.cacheFiles(namespace, path, 'unlinkDir', fileroot)
         }
       )
       .on(
         'error',
         options.onErrorCallback ? (path) => {
           options.onErrorCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'error')
+          this.cacheFiles(namespace, path, 'error', fileroot)
         } : (error) => {
           console.log(`Watcher error: ${error}`);
         }
@@ -175,7 +210,7 @@ class WatcherWebpackPlugin {
         'raw',
         options.onRawCallback ? (path) => {
           options.onRawCallback(namespace, path);
-          this.cacheFiles(namespace, path, 'raw')
+          this.cacheFiles(namespace, path, 'raw', fileroot)
         } : (event, path, details) => {
           return null;
         }
@@ -183,14 +218,13 @@ class WatcherWebpackPlugin {
 
   }
 
-  apply(compiler) {
-    this.compiler = compiler;
+  apply() {
     Object.keys(this.rules).forEach(key => {
       let namespace = key;
       let rule = this.rules[namespace];
-
-      let watcher = this.createChokidar(rule, this.chokidarOption)
-      this.bindWatcher(watcher, compiler, namespace);
+      this.watcherFiles[namespace] = []
+      let watcher = this.createChokidar(rule, this.chokidarOption, this.root || '.')
+      this.bindWatcher(watcher, namespace, this.root || '.');
     })
   }
 }
